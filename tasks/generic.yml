@@ -1,0 +1,14 @@
+---
+
+ ### nflynn - to get specific info from clients
+
+- hosts: boru
+
+    - block:
+
+      when: ansible_os_family == 'RedHat'
+
+
+    - block:
+
+      when: ansible_os_family == 'Solaris'

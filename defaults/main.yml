@@ -1,0 +1,21 @@
+---
+# defaults file for PTP
+
+# RHEL
+ptp_log: /var/log/ptp.log
+ptp_domain:
+ptp_mode: slave
+ptp_network_mode: hybrid
+sync_mode: ptp ptp_slave
+sync_mode_ntp: ntp ntp_fallback
+ntp_key: ImASecret
+
+RPMs: /var/tmp/pkg
+
+SFPTP_RPM: sfptpd-3.2.6.1003-1.x86_64.rpm
+
+# Solaris 11
+Grand_Master:
+Domain:
+
+PTP_PKG: network/ptp

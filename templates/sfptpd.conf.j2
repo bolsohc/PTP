@@ -1,0 +1,32 @@
+# {{ ansible_managed }}
+
+########################################
+#                                      #
+#       PTP Configuration file         #
+#                                      #
+########################################
+
+[general]
+message_log {{ ptp_log }}
+stats_log {{ ptp_log }}
+sync_module {{ sync_mode }}
+sync_module {{ sync_mode_ntp }}
+daemon
+# Specify an alternative ordering of rules for the selection policy
+selection_policy_rules manual state no-alarms user-priority total-accuracy clock-class allan-variance steps-removed
+
+[ntp_fallback]
+ntp_key 15 {{ ntp_key }}
+
+[ptp]
+ptp_domain {{ ptp_domain[ansible_local.datacenter.location] }}
+
+
+interface {{ ansible_default_ipv4.interface }}
+
+[ptp_slave]
+ptp_mode {{ ptp_mode }}
+ptp_network_mode {{ ptp_network_mode }}
+ptp_rx_latency 0
+ptp_tx_latency 0
+ptp_delay_resp_ignore_port_id on

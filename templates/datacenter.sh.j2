@@ -1,0 +1,14 @@
+#!/bin/bash
+## {{ ansible_managed }}
+{% set IP = ansible_default_ipv4.address.split(".") %}
+{% if IP[0] in ["10","172"] %}
+{% set DC = octet_map[IP[0]][IP[1]] %}
+{% else %}
+{% set DC = octet_map[IP[0]][IP[1]][IP[2]] %}
+{% endif %}
+
+cat <<EOF
+{
+  "location" : "{{ DC }}"
+}
+EOF

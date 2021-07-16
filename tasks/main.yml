@@ -1,0 +1,111 @@
+---
+# tasks file for PTP
+
+
+## Custom Facts - START
+#- name: Ensure custom facts directory exists
+  #file: path=/etc/ansible/facts.d recurse=yes state=directory
+#
+#- name: Copy datacenter fact script
+  #template: src="{{ role_path }}/templates/datacenter.sh.j2" dest=/etc/ansible/facts.d/datacenter.fact owner=root group=root mode=0744
+#
+#- name: reload ansible_local
+  #setup: filter=ansible_local
+##  Custom Facts - END
+
+# Tasks for RHEL - START
+- block:
+
+  - name: Setup RPMs directory
+    file: dest=/var/tmp/pkg state=directory owner=root group=root mode=0755
+
+  - name: copy SolarFlare PTP rpm package to server
+    copy: src={{ item }} dest={{ RPMs }} owner=root group=root mode=0644
+    with_items:
+    - sfptpd-3.2.6.1003-1.x86_64.rpm
+
+  - name: Install package
+    yum:
+       name: /var/tmp/pkg/{{ SFPTP_RPM }}
+       state: present
+
+  - name: Disable ntp daemon
+    service:
+            name: ntpd
+            state: stopped
+
+  - name: change default config file
+    command: mv /etc/sfptpd.conf /etc/sfptpd.conf.ORIG
+
+  - name: create ntp keys
+    lineinfile:
+      dest: /etc/ntp/keys
+      line: '15 M {{ ntp_key }}'
+      state: "present"
+
+  - name: update ntp.conf
+    template: src=ntp.conf.j2 dest=/etc/ntp.conf owner=root group=root mode=0644
+    backup: yes
+
+  - name: Enable ntp daemon
+    service:
+            name: ntpd
+            state: started
+
+  - name: Copy configuration file
+    template: src=sfptpd.conf.j2 dest=/etc/sfptpd.conf owner=root group=root mode=0644
+    notify: restart sfptpd
+
+  - name: chkconfig sfptpd RHEL7
+    #systemd: name=sfptpd state=started enabled=yes
+    shell: systemctl enable sfptpd
+    when:  ansible_distribution_version == '7.3'
+
+  - name: chkconfig sfptpd RHEL6
+    shell: chkconfig sfptpd on
+    when:  ansible_distribution_version == '6.8'
+
+
+#  when:  ansible_eth0.module == 'sfc'  and  ansible_os_family == 'RedHat'
+  when:  ansible_os_family == 'RedHat'
+
+
+# Tasks for RHEL - END
+
+# Tasks For Solaris 11 - START
+
+- name: Install PTP package for Solaris 11
+  when: ansible_os_family == "Solaris"
+  pkg5:
+       name: "{{ PTP_PKG }}"
+
+- name: Solaris 11 PTP - set interface
+  when: ansible_os_family == "Solaris"
+  command: svccfg -s network/ptp:default setprop config/listen_ifname = {{ ansible_default_ipv4.interface }}
+
+- name: Solaris 11 PTP - node type
+  when: ansible_os_family == "Solaris"
+  command: svccfg -s network/ptp:default setprop config/node_type = slave
+
+- name: Solaris 11 PTP - set domain
+  when: ansible_os_family == "Solaris"
+  #command: svccfg -s network/ptp:default setprop config/domain = 2
+  command: svccfg -s network/ptp:default setprop config/domain = {{ Domain[ansible_local.datacenter.location] }}
+
+- name: Solaris 11 PTP - set GM
+  when: ansible_os_family == "Solaris"
+  command: svccfg -s network/ptp:default setprop config/other_options = '("-u{{ Grand_Master[ansible_local.datacenter.location] }}" "-Z")'
+
+- name: Configure PTP for Solaris 11 enable logging
+  when: ansible_os_family == "Solaris"
+  command: svccfg -s network/ptp:default setprop config/enable_logging = true
+
+- name: Disable NTP
+  when: ansible_os_family == "Solaris"
+  service: name=network/ntp:default state=stopped
+
+- name: Enable PTP
+  when: ansible_os_family == "Solaris"
+  service: name=network/ptp:default state=started
+
+# Tasks For Solaris 11 - END

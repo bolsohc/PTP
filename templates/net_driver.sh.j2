@@ -1,0 +1,6 @@
+#!/bin/bash
+## {{ ansible_managed }}
+{% set TRUE = ansible_eth0.module %}
+{% if TRUE in ["sfc"] %}
+{% set NIC = Solarflare %}
+{% endif %}

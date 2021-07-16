@@ -1,0 +1,26 @@
+---
+# handlers file for PTP
+
+# RHEL handlers - START
+
+- name: restart sfptpd
+  service: name=sfptpd state=restarted
+
+- name: start sfptpd
+  service: name=sfptpd state=started
+
+- name: enable sfptpd for automatic start
+  service: name=sfptpd enabled=yes
+
+
+# RHEL handlers - END
+
+# Solaris 11 handlers - START
+
+- name: enable PTP service
+  service: name=network/ptp:default state=started
+
+- name: disable NTP service
+  service: name=network/ntp:default state=stopped
+
+# Solaris 11 handlers - END

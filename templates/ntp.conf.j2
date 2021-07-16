@@ -1,0 +1,16 @@
+# {{ ansible_managed }}
+
+driftfile /var/lib/ntp/drift
+restrict default nomodify notrap nopeer noquery
+restrict 127.0.0.1
+restrict ::1
+restrict {{ ansible_default_ipv4.address }}
+server  timeserver  prefer
+server  timeserver2
+server  timeserver4
+includefile /etc/ntp/crypto/pw
+keys /etc/ntp/keys
+trustedkey 15
+requestkey 15
+disable monitor
+enable mode7
